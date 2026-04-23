@@ -1,0 +1,19 @@
+# ETAPA 1: Construcción (Build)
+FROM maven:3.8.5-openjdk-17 AS build
+WORKDIR /app
+# Copiamos solo el pom.xml para aprovechar la caché de dependencias
+COPY pom.xml .
+RUN mvn dependency:go-offline
+# Copiamos el código fuente
+COPY src ./src
+# Compilamos el proyecto (sin tests para ir más rápido al probar)
+RUN mvn clean package -DskipTests
+
+# ETAPA 2: Ejecución
+FROM eclipse-temurin:17-jre-alpine
+WORKDIR /app
+# Copiamos el jar generado en la etapa anterior
+COPY --from=build /app/target/*.jar app.jar
+# Exponemos el puerto de la API
+EXPOSE 8080
+ENTRYPOINT ["java", "-jar", "app.jar"]

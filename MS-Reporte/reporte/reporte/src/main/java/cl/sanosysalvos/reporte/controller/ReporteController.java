@@ -1,9 +1,13 @@
-package cl.sanosysalvos.reporte.controller; // Ajusta a 'reporte' si tu carpeta es singular
+package cl.sanosysalvos.reporte.controller;
 
-import cl.sanosysalvos.reporte.model.ReporteModel; // Importa tu entidad
-import cl.sanosysalvos.reporte.service.ReporteService; // Importa tu interfaz de servicio
+import cl.sanosysalvos.reporte.dto.ReporteRequestDTO;
+import cl.sanosysalvos.reporte.dto.ReporteResponseDTO;
+import cl.sanosysalvos.reporte.service.ReporteService;
+import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
 
 @RestController
@@ -12,33 +16,40 @@ public class ReporteController {
 
     private final ReporteService reporteService;
 
+    // Inyección de dependencias por constructor
     public ReporteController(ReporteService reporteService) {
         this.reporteService = reporteService;
     }
 
     @PostMapping
-    public ResponseEntity<ReporteModel> crear(@RequestBody ReporteModel reporte) {
-        return ResponseEntity.ok(reporteService.guardarReporte(reporte));
+    public ResponseEntity<ReporteResponseDTO> crear(@Valid @RequestBody ReporteRequestDTO dto) {
+        ReporteResponseDTO nuevoReporte = reporteService.guardarReporte(dto);
+        // Retornamos 201 Created, que es el estándar para creación de recursos
+        return ResponseEntity.status(HttpStatus.CREATED).body(nuevoReporte);
     }
 
     @GetMapping
-    public ResponseEntity<List<ReporteModel>> listarTodos() {
-        return ResponseEntity.ok(reporteService.obtenerTodos());
+    public ResponseEntity<List<ReporteResponseDTO>> listar() {
+        List<ReporteResponseDTO> lista = reporteService.obtenerTodos();
+        return ResponseEntity.ok(lista);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ReporteModel> buscarPorId(@PathVariable Long id) {
-        return ResponseEntity.ok(reporteService.obtenerPorId(id));
+    public ResponseEntity<ReporteResponseDTO> obtenerPorId(@PathVariable Long id) {
+        ReporteResponseDTO reporte = reporteService.obtenerPorId(id);
+        return ResponseEntity.ok(reporte);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ReporteModel> actualizar(@PathVariable Long id, @RequestBody ReporteModel reporteActualizado) {
-        return ResponseEntity.ok(reporteService.actualizarReporte(id, reporteActualizado));
+    public ResponseEntity<ReporteResponseDTO> actualizar(@PathVariable Long id, @Valid @RequestBody ReporteRequestDTO dto) {
+        ReporteResponseDTO actualizado = reporteService.actualizarReporte(id, dto);
+        return ResponseEntity.ok(actualizado);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminar(@PathVariable Long id) {
         reporteService.eliminarReporte(id);
+        // Retornamos 204 No Content, indicando que se eliminó correctamente
         return ResponseEntity.noContent().build();
     }
 }

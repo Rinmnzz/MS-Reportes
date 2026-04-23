@@ -1,12 +1,14 @@
 package cl.sanosysalvos.reporte.service;
 
-import cl.sanosysalvos.reporte.model.ReporteModel;
+import cl.sanosysalvos.reporte.dto.ReporteRequestDTO;
+import cl.sanosysalvos.reporte.dto.ReporteResponseDTO;
 import java.util.List;
 
 public interface ReporteService {
-    ReporteModel guardarReporte(ReporteModel reporte);
-    List<ReporteModel> obtenerTodos();
-    ReporteModel obtenerPorId(Long id);
-    ReporteModel actualizarReporte(Long id, ReporteModel reporte);
+    
+    ReporteResponseDTO guardarReporte(ReporteRequestDTO dto);
+    List<ReporteResponseDTO> obtenerTodos();
+    ReporteResponseDTO obtenerPorId(Long id);
+    ReporteResponseDTO actualizarReporte(Long id, ReporteRequestDTO dto);
     void eliminarReporte(Long id);
 }

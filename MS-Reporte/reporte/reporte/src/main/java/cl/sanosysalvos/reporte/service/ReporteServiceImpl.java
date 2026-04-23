@@ -1,75 +1,98 @@
 package cl.sanosysalvos.reporte.service;
 
+import cl.sanosysalvos.reporte.dto.ReporteRequestDTO;
+import cl.sanosysalvos.reporte.dto.ReporteResponseDTO;
 import cl.sanosysalvos.reporte.model.ReporteModel;
 import cl.sanosysalvos.reporte.repository.ReporteRepository;
 import cl.sanosysalvos.reporte.service.ReporteService;
-import cl.sanosysalvos.reporte.service.GeoService; // Asegúrate de importar tu servicio de geo
-import cl.sanosysalvos.reporte.messaging.ReportePublisher; // Asegúrate de importar tu publisher
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import cl.sanosysalvos.reporte.messaging.ReportePublisher;
 
 import java.util.List;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class ReporteServiceImpl implements ReporteService {
 
     private final ReporteRepository reporteRepository;
-    private final GeoService geoService;
     private final ReportePublisher reportePublisher;
 
-    // Inyección de dependencias actualizada para incluir los nuevos servicios
-    public ReporteServiceImpl(ReporteRepository reporteRepository, 
-                              GeoService geoService, 
-                              ReportePublisher reportePublisher) {
+    public ReporteServiceImpl(ReporteRepository reporteRepository, ReportePublisher reportePublisher) {
         this.reporteRepository = reporteRepository;
-        this.geoService = geoService;
         this.reportePublisher = reportePublisher;
     }
 
     @Override
     @Transactional
-    public ReporteModel guardarReporte(ReporteModel reporte) {
-        
-        // 1. Lógica de Geolocalización:
-        // Convertimos la dirección en coordenadas antes de guardar
-        String coordenadas = geoService.obtenerCoordenadas(reporte.getDireccion());
-        reporte.setCoordenadas(coordenadas); // Asumiendo que tu modelo tiene este setter
+    public ReporteResponseDTO guardarReporte(ReporteRequestDTO dto) {
+        // 1. Mapear DTO a Entity (Model)
+        ReporteModel reporte = new ReporteModel();
+        reporte.setIdUsuario(dto.getIdUsuario());
+        reporte.setTipoReporte(dto.getTipoReporte());
+        reporte.setTipoMascota(dto.getTipoMascota());
+        reporte.setNombreMascota(dto.getNombreMascota());
+        reporte.setColor(dto.getColor());
+        reporte.setTamano(dto.getTamano());
+        reporte.setRaza(dto.getRaza());
+        reporte.setFotoMascota(dto.getFotoMascota());
+        reporte.setDescripcion(dto.getDescripcion());
+        reporte.setDireccion(dto.getDireccion());
+        reporte.setCoordenadas(dto.getCoordenadas());
 
-        // 2. Persistencia:
-        // Guardamos en la base de datos
+        // 2. Persistir en base de datos
         ReporteModel guardado = reporteRepository.save(reporte);
 
-        // 3. Notificación (RabbitMQ):
-        // Enviamos el evento al bus de mensajes
-        //reportePublisher.publicarNuevoReporte(guardado);
+        // 3. Mapear Entity a ResponseDTO (para retornar y publicar)
+        ReporteResponseDTO responseDTO = mapToResponseDTO(guardado);
 
-        return guardado;
+        // 4. Publicar en RabbitMQ
+        reportePublisher.publicarNuevoReporte(responseDTO);
+
+        return responseDTO;
+    }
+
+    // Método auxiliar para mapear de Model a DTO
+    private ReporteResponseDTO mapToResponseDTO(ReporteModel model) {
+        ReporteResponseDTO dto = new ReporteResponseDTO();
+        dto.setIdReporte(model.getIdReporte());
+        dto.setIdUsuario(model.getIdUsuario());
+        dto.setTipoReporte(model.getTipoReporte());
+        dto.setTipoMascota(model.getTipoMascota());
+        dto.setNombreMascota(model.getNombreMascota());
+        dto.setColor(model.getColor());
+        dto.setTamano(model.getTamano());
+        dto.setRaza(model.getRaza());
+        dto.setFotoMascota(model.getFotoMascota());
+        dto.setDescripcion(model.getDescripcion());
+        dto.setDireccion(model.getDireccion());
+        dto.setCoordenadas(model.getCoordenadas());
+        return dto;
     }
 
     @Override
-    public List<ReporteModel> obtenerTodos() {
-        return reporteRepository.findAll();
+    public List<ReporteResponseDTO> obtenerTodos() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'obtenerTodos'");
     }
 
     @Override
-    public ReporteModel obtenerPorId(Long id) {
-        return reporteRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Reporte no encontrado con ID: " + id));
+    public ReporteResponseDTO obtenerPorId(Long id) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'obtenerPorId'");
     }
 
     @Override
-    @Transactional
-    public ReporteModel actualizarReporte(Long id, ReporteModel reporteActualizado) {
-        if (!reporteRepository.existsById(id)) {
-            throw new RuntimeException("No se puede actualizar, el reporte no existe.");
-        }
-        reporteActualizado.setIdReporte(id);
-        return reporteRepository.save(reporteActualizado);
+    public ReporteResponseDTO actualizarReporte(Long id, ReporteRequestDTO dto) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'actualizarReporte'");
     }
 
     @Override
-    @Transactional
     public void eliminarReporte(Long id) {
-        reporteRepository.deleteById(id);
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'eliminarReporte'");
     }
+
+    // ... el resto de tus métodos (listar, obtener, etc.)
 }
