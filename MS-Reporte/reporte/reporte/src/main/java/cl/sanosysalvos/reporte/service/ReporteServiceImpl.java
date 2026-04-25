@@ -4,13 +4,13 @@ import cl.sanosysalvos.reporte.dto.ReporteRequestDTO;
 import cl.sanosysalvos.reporte.dto.ReporteResponseDTO;
 import cl.sanosysalvos.reporte.model.ReporteModel;
 import cl.sanosysalvos.reporte.repository.ReporteRepository;
-import cl.sanosysalvos.reporte.service.ReporteService;
 import cl.sanosysalvos.reporte.messaging.ReportePublisher;
-
-import java.util.List;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class ReporteServiceImpl implements ReporteService {
@@ -52,47 +52,76 @@ public class ReporteServiceImpl implements ReporteService {
         return responseDTO;
     }
 
-    // Método auxiliar para mapear de Model a DTO
-    private ReporteResponseDTO mapToResponseDTO(ReporteModel model) {
-        ReporteResponseDTO dto = new ReporteResponseDTO();
-        dto.setIdReporte(model.getIdReporte());
-        dto.setIdUsuario(model.getIdUsuario());
-        dto.setTipoReporte(model.getTipoReporte());
-        dto.setTipoMascota(model.getTipoMascota());
-        dto.setNombreMascota(model.getNombreMascota());
-        dto.setColor(model.getColor());
-        dto.setTamano(model.getTamano());
-        dto.setRaza(model.getRaza());
-        dto.setFotoMascota(model.getFotoMascota());
-        dto.setDescripcion(model.getDescripcion());
-        dto.setDireccion(model.getDireccion());
-        dto.setCoordenadas(model.getCoordenadas());
-        return dto;
-    }
-
     @Override
     public List<ReporteResponseDTO> obtenerTodos() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'obtenerTodos'");
+        // Busca todas las entidades, las convierte en un Stream y mapea cada una a DTO
+        return reporteRepository.findAll()
+                .stream()
+                .map(this::mapToResponseDTO)
+                .collect(Collectors.toList());
     }
 
     @Override
     public ReporteResponseDTO obtenerPorId(Long id) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'obtenerPorId'");
+        // Busca por ID. Si no lo encuentra, lanza una excepción que tu GlobalExceptionHandler puede atrapar
+        ReporteModel reporte = reporteRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Reporte no encontrado con ID: " + id));
+        
+        return mapToResponseDTO(reporte);
     }
 
     @Override
+    @Transactional
     public ReporteResponseDTO actualizarReporte(Long id, ReporteRequestDTO dto) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'actualizarReporte'");
+        // 1. Buscar el reporte existente
+        ReporteModel reporteExistente = reporteRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("No se puede actualizar. Reporte no encontrado con ID: " + id));
+
+        // 2. Actualizar los campos con los datos del DTO
+        reporteExistente.setIdUsuario(dto.getIdUsuario());
+        reporteExistente.setTipoReporte(dto.getTipoReporte());
+        reporteExistente.setTipoMascota(dto.getTipoMascota());
+        reporteExistente.setNombreMascota(dto.getNombreMascota());
+        reporteExistente.setColor(dto.getColor());
+        reporteExistente.setTamano(dto.getTamano());
+        reporteExistente.setRaza(dto.getRaza());
+        reporteExistente.setFotoMascota(dto.getFotoMascota());
+        reporteExistente.setDescripcion(dto.getDescripcion());
+        reporteExistente.setDireccion(dto.getDireccion());
+        reporteExistente.setCoordenadas(dto.getCoordenadas());
+
+        // 3. Guardar los cambios (al estar en @Transactional a veces no es necesario el .save(), pero es buena práctica explícita)
+        ReporteModel reporteActualizado = reporteRepository.save(reporteExistente);
+
+        // 4. Retornar el DTO actualizado
+        return mapToResponseDTO(reporteActualizado);
     }
 
     @Override
+    @Transactional
     public void eliminarReporte(Long id) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'eliminarReporte'");
+        // Validar primero si existe para no lanzar errores extraños de JPA
+        if (!reporteRepository.existsById(id)) {
+            throw new RuntimeException("No se puede eliminar. Reporte no encontrado con ID: " + id);
+        }
+        reporteRepository.deleteById(id);
     }
 
-    // ... el resto de tus métodos (listar, obtener, etc.)
+    // Método auxiliar unificado para mapear de Model a DTO usando el patrón Builder
+    private ReporteResponseDTO mapToResponseDTO(ReporteModel model) {
+        return ReporteResponseDTO.builder()
+                .id(model.getIdReporte()) // <-- AHORA ES ASÍ
+                .idUsuario(model.getIdUsuario())
+                .tipoReporte(model.getTipoReporte())
+                .tipoMascota(model.getTipoMascota())
+                .nombreMascota(model.getNombreMascota())
+                .color(model.getColor())
+                .tamano(model.getTamano())
+                .raza(model.getRaza())
+                .fotoMascota(model.getFotoMascota())
+                .descripcion(model.getDescripcion())
+                .direccion(model.getDireccion())
+                .coordenadas(model.getCoordenadas())
+                .build();
+    }
 }

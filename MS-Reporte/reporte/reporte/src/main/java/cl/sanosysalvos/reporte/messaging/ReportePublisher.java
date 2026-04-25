@@ -16,6 +16,6 @@ public class ReportePublisher {
 
     public void publicarNuevoReporte(ReporteResponseDTO reporte) {
         rabbitTemplate.convertAndSend(QUEUE_NAME, reporte);
-        System.out.println(">>> [RabbitMQ] Reporte enviado a la cola: " + reporte.getIdReporte());
+        System.out.println(">>> [RabbitMQ] Reporte enviado a la cola: " + reporte.getId());
     }
 }

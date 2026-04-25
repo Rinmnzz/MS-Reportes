@@ -1,20 +1,19 @@
 package cl.sanosysalvos.reporte.repository;
 
 import cl.sanosysalvos.reporte.model.ReporteModel;
-import cl.sanosysalvos.reporte.model.TipoReporte;
+import cl.sanosysalvos.reporte.dto.ReporteResponseDTO;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
 public interface ReporteRepository extends JpaRepository<ReporteModel, Long> {
 
-
-    List<ReporteModel> findByTipoReporte(TipoReporte tipoReporte);
-
-    List<ReporteModel> findByRaza(String raza);
-
-    List<ReporteModel> findByIdUsuario(Integer idUsuario);
-    
+    @Query("SELECT new cl.sanosysalvos.reporte.dto.ReporteResponseDTO(r.id, r.raza, r.tipoReporte) " +
+           "FROM ReporteModel r " +
+           "WHERE r.idUsuario = :idUsuario")
+    List<ReporteResponseDTO> findReportesByUsuarioId(@Param("idUsuario") Integer idUsuario);
 
 }

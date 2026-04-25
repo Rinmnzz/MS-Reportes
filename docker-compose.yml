@@ -1,5 +1,4 @@
 version: '3.8'
-
 services:
   rabbitmq:
     image: rabbitmq:3-management
@@ -14,7 +13,8 @@ services:
       - app-network
 
   app:
-    build: .
+    # Asegúrate de que esta ruta sea la carpeta donde está tu Dockerfile
+    build: ./MS-Reporte/reporte/reporte/
     container_name: app-reportes
     ports:
       - "8080:8080"
@@ -27,9 +27,6 @@ services:
       SPRING_RABBITMQ_PASSWORD: guest
     networks:
       - app-network
-
-
-
 
 networks:
   app-network:
