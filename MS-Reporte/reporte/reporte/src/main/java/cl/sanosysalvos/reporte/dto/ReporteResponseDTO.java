@@ -6,14 +6,12 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import java.time.LocalDateTime;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class ReporteResponseDTO {
-    
     
     private Long id; 
     private Integer idUsuario;
@@ -38,4 +36,11 @@ public class ReporteResponseDTO {
     
     // Estado interno del reporte
     private String estado; // Ej: ACTIVO, RESUELTO
+    
+    // Constructor personalizado para queries
+    public ReporteResponseDTO(Long id, String raza, TipoReporte tipoReporte) {
+        this.id = id;
+        this.raza = raza;
+        this.tipoReporte = tipoReporte;
+    }
 }

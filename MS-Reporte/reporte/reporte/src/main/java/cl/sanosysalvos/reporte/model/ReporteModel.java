@@ -1,6 +1,5 @@
 package cl.sanosysalvos.reporte.model;
 
-
 import jakarta.persistence.*;
 import lombok.Data; 
 
@@ -11,9 +10,8 @@ public class ReporteModel {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id_reporte")
     private Long idReporte;
-
-    
     
     @Column(name = "id_usuario")
     private Integer idUsuario;
