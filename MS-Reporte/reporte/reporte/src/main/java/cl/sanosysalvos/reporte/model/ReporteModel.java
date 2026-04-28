@@ -10,7 +10,7 @@ public class ReporteModel {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id_reporte")
+    @Column(name = "id_reporte")    
     private Long idReporte;
     
     @Column(name = "id_usuario")
