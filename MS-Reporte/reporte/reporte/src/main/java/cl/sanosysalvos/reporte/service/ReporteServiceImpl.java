@@ -44,6 +44,8 @@ public class ReporteServiceImpl implements ReporteService {
         reporte.setFotoMascota(dto.getFotoMascota());
         reporte.setDescripcion(dto.getDescripcion());
         reporte.setDireccion(dto.getDireccion());
+        reporte.setEstado(dto.getEstado());
+        reporte.setSexo(dto.getSexo());
 
         // 3. LA MAGIA DEL GEOSERVICE OCURRE AQUÍ
         // Validamos: Si no hay coordenadas, pero sí escribieron una dirección...
@@ -138,6 +140,8 @@ public class ReporteServiceImpl implements ReporteService {
             .descripcion(model.getDescripcion())
             .direccion(model.getDireccion())
             .coordenadas(model.getCoordenadas())
+            .sexo(model.getSexo())
+            .estado(model.getEstado())
             .build();
     }
 }

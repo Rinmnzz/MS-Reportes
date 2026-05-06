@@ -47,4 +47,12 @@ public class ReporteModel {
 
     @Column(name = "direccion", columnDefinition = "TEXT")
     private String direccion;
+
+    @Column(name = "estado")
+    private String estado = "ACTIVO";
+    
+    @Column(name = "sexo")
+    private String sexo;
+
+
 }
