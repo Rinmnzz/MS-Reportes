@@ -17,16 +17,22 @@ public class ReporteServiceImpl implements ReporteService {
 
     private final ReporteRepository reporteRepository;
     private final ReportePublisher reportePublisher;
+    private final GeoService geoService; // <-- 1. Declaramos el GeoService
 
-    public ReporteServiceImpl(ReporteRepository reporteRepository, ReportePublisher reportePublisher) {
+    // 2. Inyectamos los 3 servicios en el constructor
+    public ReporteServiceImpl(
+        ReporteRepository reporteRepository, 
+        ReportePublisher reportePublisher, 
+        GeoService geoService) {
         this.reporteRepository = reporteRepository;
         this.reportePublisher = reportePublisher;
+        this.geoService = geoService;
     }
 
     @Override
     @Transactional
     public ReporteResponseDTO guardarReporte(ReporteRequestDTO dto) {
-        // 1. Mapear DTO a Entity (Model)
+        // Mapear DTO a Entity
         ReporteModel reporte = new ReporteModel();
         reporte.setIdUsuario(dto.getIdUsuario());
         reporte.setTipoReporte(dto.getTipoReporte());
@@ -38,15 +44,27 @@ public class ReporteServiceImpl implements ReporteService {
         reporte.setFotoMascota(dto.getFotoMascota());
         reporte.setDescripcion(dto.getDescripcion());
         reporte.setDireccion(dto.getDireccion());
-        reporte.setCoordenadas(dto.getCoordenadas());
 
-        // 2. Persistir en base de datos
+        // 3. LA MAGIA DEL GEOSERVICE OCURRE AQUÍ
+        // Validamos: Si no hay coordenadas, pero sí escribieron una dirección...
+        if ((dto.getCoordenadas() == null || dto.getCoordenadas().isBlank()) 
+                && dto.getDireccion() != null && !dto.getDireccion().isBlank()) {
+            
+            // ...vamos al GeoService, le pasamos la dirección y nos trae las coordenadas
+            String coordenadasCalculadas = geoService.obtenerCoordenadas(dto.getDireccion());
+            reporte.setCoordenadas(coordenadasCalculadas);
+        } else {
+            // Si el frontend ya mandó las coordenadas precisas, simplemente las usamos
+            reporte.setCoordenadas(dto.getCoordenadas());
+        }
+
+        // Persistir en base de datos
         ReporteModel guardado = reporteRepository.save(reporte);
 
-        // 3. Mapear Entity a ResponseDTO (para retornar y publicar)
+        // Mapear a DTO para responder
         ReporteResponseDTO responseDTO = mapToResponseDTO(guardado);
 
-        // 4. Publicar en RabbitMQ
+        // Publicar en RabbitMQ para que otros microservicios (ej. Coincidencias) se enteren
         reportePublisher.publicarNuevoReporte(responseDTO);
 
         return responseDTO;
@@ -54,30 +72,25 @@ public class ReporteServiceImpl implements ReporteService {
 
     @Override
     public List<ReporteResponseDTO> obtenerTodos() {
-        // Busca todas las entidades, las convierte en un Stream y mapea cada una a DTO
         return reporteRepository.findAll()
-                .stream()
-                .map(this::mapToResponseDTO)
-                .collect(Collectors.toList());
+            .stream()
+            .map(this::mapToResponseDTO)
+            .collect(Collectors.toList());
     }
 
     @Override
     public ReporteResponseDTO obtenerPorId(Long id) {
-        // Busca por ID. Si no lo encuentra, lanza una excepción que tu GlobalExceptionHandler puede atrapar
         ReporteModel reporte = reporteRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Reporte no encontrado con ID: " + id));
-        
+            .orElseThrow(() -> new RuntimeException("Reporte no encontrado con ID: " + id));
         return mapToResponseDTO(reporte);
     }
 
     @Override
     @Transactional
     public ReporteResponseDTO actualizarReporte(Long id, ReporteRequestDTO dto) {
-        // 1. Buscar el reporte existente
         ReporteModel reporteExistente = reporteRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("No se puede actualizar. Reporte no encontrado con ID: " + id));
+            .orElseThrow(() -> new RuntimeException("No se puede actualizar. Reporte no encontrado con ID: " + id));
 
-        // 2. Actualizar los campos con los datos del DTO
         reporteExistente.setIdUsuario(dto.getIdUsuario());
         reporteExistente.setTipoReporte(dto.getTipoReporte());
         reporteExistente.setTipoMascota(dto.getTipoMascota());
@@ -88,40 +101,43 @@ public class ReporteServiceImpl implements ReporteService {
         reporteExistente.setFotoMascota(dto.getFotoMascota());
         reporteExistente.setDescripcion(dto.getDescripcion());
         reporteExistente.setDireccion(dto.getDireccion());
-        reporteExistente.setCoordenadas(dto.getCoordenadas());
 
-        // 3. Guardar los cambios (al estar en @Transactional a veces no es necesario el .save(), pero es buena práctica explícita)
+        // También aplicamos la magia aquí por si actualizaron la dirección
+        if ((dto.getCoordenadas() == null || dto.getCoordenadas().isBlank()) 
+                && dto.getDireccion() != null && !dto.getDireccion().isBlank()) {
+            String coordenadasCalculadas = geoService.obtenerCoordenadas(dto.getDireccion());
+            reporteExistente.setCoordenadas(coordenadasCalculadas);
+        } else {
+            reporteExistente.setCoordenadas(dto.getCoordenadas());
+        }
+
         ReporteModel reporteActualizado = reporteRepository.save(reporteExistente);
-
-        // 4. Retornar el DTO actualizado
         return mapToResponseDTO(reporteActualizado);
     }
 
     @Override
     @Transactional
     public void eliminarReporte(Long id) {
-        // Validar primero si existe para no lanzar errores extraños de JPA
         if (!reporteRepository.existsById(id)) {
             throw new RuntimeException("No se puede eliminar. Reporte no encontrado con ID: " + id);
         }
         reporteRepository.deleteById(id);
     }
 
-    // Método auxiliar unificado para mapear de Model a DTO usando el patrón Builder
     private ReporteResponseDTO mapToResponseDTO(ReporteModel model) {
         return ReporteResponseDTO.builder()
-                .id(model.getIdReporte()) // <-- AHORA ES ASÍ
-                .idUsuario(model.getIdUsuario())
-                .tipoReporte(model.getTipoReporte())
-                .tipoMascota(model.getTipoMascota())
-                .nombreMascota(model.getNombreMascota())
-                .color(model.getColor())
-                .tamano(model.getTamano())
-                .raza(model.getRaza())
-                .fotoMascota(model.getFotoMascota())
-                .descripcion(model.getDescripcion())
-                .direccion(model.getDireccion())
-                .coordenadas(model.getCoordenadas())
-                .build();
+            .id(model.getIdReporte())
+            .idUsuario(model.getIdUsuario())
+            .tipoReporte(model.getTipoReporte())
+            .tipoMascota(model.getTipoMascota())
+            .nombreMascota(model.getNombreMascota())
+            .color(model.getColor())
+            .tamano(model.getTamano())
+            .raza(model.getRaza())
+            .fotoMascota(model.getFotoMascota())
+            .descripcion(model.getDescripcion())
+            .direccion(model.getDireccion())
+            .coordenadas(model.getCoordenadas())
+            .build();
     }
 }

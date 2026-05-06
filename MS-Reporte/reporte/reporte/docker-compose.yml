@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  # 1. Tu Base de Datos
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: coincidencias # Recuerda idealmente cambiar esto a reportes_db a futuro
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+
+  # 2. Tu Mensajería
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+  # 3. ¡Tu Microservicio de Reportes!
+  reporte-api:
+    build: . # Esto le dice a Docker que lea tu Dockerfile local
+    ports:
+      - "8080:8080"
+    environment:
+      # Sobreescribimos las variables para que se conecte a los contenedores
+      - DB_HOST=postgres 
+      - RABBITMQ_HOST=rabbitmq
+      # Pon tu API Key real aquí para probar (luego la puedes ocultar con un archivo .env)
+      - LOCATIONIQ_API_KEY=pk.2e92838d440f2603cc598bce80e25847
+    depends_on:
+      - postgres
+      - rabbitmq
+
+      
