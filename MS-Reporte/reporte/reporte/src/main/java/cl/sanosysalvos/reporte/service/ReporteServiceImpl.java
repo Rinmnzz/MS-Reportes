@@ -32,41 +32,12 @@ public class ReporteServiceImpl implements ReporteService {
     @Override
     @Transactional
     public ReporteResponseDTO guardarReporte(ReporteRequestDTO dto) {
-        // Mapear DTO a Entity
-        ReporteModel reporte = new ReporteModel();
-        reporte.setIdUsuario(dto.getIdUsuario());
-        reporte.setTipoReporte(dto.getTipoReporte());
-        reporte.setTipoMascota(dto.getTipoMascota());
-        reporte.setNombreMascota(dto.getNombreMascota());
-        reporte.setColor(dto.getColor());
-        reporte.setTamano(dto.getTamano());
-        reporte.setRaza(dto.getRaza());
-        reporte.setFotoMascota(dto.getFotoMascota());
-        reporte.setDescripcion(dto.getDescripcion());
-        reporte.setDireccion(dto.getDireccion());
-        reporte.setEstado(dto.getEstado());
-        reporte.setSexo(dto.getSexo());
+        ReporteModel reporte = mapToEntity(dto);
 
-        // 3. LA MAGIA DEL GEOSERVICE OCURRE AQUÍ
-        // Validamos: Si no hay coordenadas, pero sí escribieron una dirección...
-        if ((dto.getCoordenadas() == null || dto.getCoordenadas().isBlank()) 
-                && dto.getDireccion() != null && !dto.getDireccion().isBlank()) {
-            
-            // ...vamos al GeoService, le pasamos la dirección y nos trae las coordenadas
-            String coordenadasCalculadas = geoService.obtenerCoordenadas(dto.getDireccion());
-            reporte.setCoordenadas(coordenadasCalculadas);
-        } else {
-            // Si el frontend ya mandó las coordenadas precisas, simplemente las usamos
-            reporte.setCoordenadas(dto.getCoordenadas());
-        }
-
-        // Persistir en base de datos
         ReporteModel guardado = reporteRepository.save(reporte);
 
-        // Mapear a DTO para responder
         ReporteResponseDTO responseDTO = mapToResponseDTO(guardado);
 
-        // Publicar en RabbitMQ para que otros microservicios (ej. Coincidencias) se enteren
         reportePublisher.publicarNuevoReporte(responseDTO);
 
         return responseDTO;
@@ -93,25 +64,8 @@ public class ReporteServiceImpl implements ReporteService {
         ReporteModel reporteExistente = reporteRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("No se puede actualizar. Reporte no encontrado con ID: " + id));
 
-        reporteExistente.setIdUsuario(dto.getIdUsuario());
-        reporteExistente.setTipoReporte(dto.getTipoReporte());
-        reporteExistente.setTipoMascota(dto.getTipoMascota());
-        reporteExistente.setNombreMascota(dto.getNombreMascota());
-        reporteExistente.setColor(dto.getColor());
-        reporteExistente.setTamano(dto.getTamano());
-        reporteExistente.setRaza(dto.getRaza());
-        reporteExistente.setFotoMascota(dto.getFotoMascota());
-        reporteExistente.setDescripcion(dto.getDescripcion());
-        reporteExistente.setDireccion(dto.getDireccion());
-
-        // También aplicamos la magia aquí por si actualizaron la dirección
-        if ((dto.getCoordenadas() == null || dto.getCoordenadas().isBlank()) 
-                && dto.getDireccion() != null && !dto.getDireccion().isBlank()) {
-            String coordenadasCalculadas = geoService.obtenerCoordenadas(dto.getDireccion());
-            reporteExistente.setCoordenadas(coordenadasCalculadas);
-        } else {
-            reporteExistente.setCoordenadas(dto.getCoordenadas());
-        }
+        aplicarCamposEditables(reporteExistente, dto);
+        actualizarCoordenadas(reporteExistente, dto.getDireccion());
 
         ReporteModel reporteActualizado = reporteRepository.save(reporteExistente);
         return mapToResponseDTO(reporteActualizado);
@@ -124,6 +78,33 @@ public class ReporteServiceImpl implements ReporteService {
             throw new RuntimeException("No se puede eliminar. Reporte no encontrado con ID: " + id);
         }
         reporteRepository.deleteById(id);
+    }
+
+    private ReporteModel mapToEntity(ReporteRequestDTO dto) {
+        ReporteModel reporte = new ReporteModel();
+        aplicarCamposEditables(reporte, dto);
+        actualizarCoordenadas(reporte, dto.getDireccion());
+        return reporte;
+    }
+
+    private void aplicarCamposEditables(ReporteModel reporte, ReporteRequestDTO dto) {
+        reporte.setIdUsuario(dto.getIdUsuario());
+        reporte.setTipoReporte(dto.getTipoReporte());
+        reporte.setTipoMascota(dto.getTipoMascota());
+        reporte.setNombreMascota(dto.getNombreMascota());
+        reporte.setColor(dto.getColor());
+        reporte.setTamano(dto.getTamano());
+        reporte.setRaza(dto.getRaza());
+        reporte.setFotoMascota(dto.getFotoMascota());
+        reporte.setDescripcion(dto.getDescripcion());
+        reporte.setDireccion(dto.getDireccion());
+        reporte.setSexo(dto.getSexo());
+    }
+
+    private void actualizarCoordenadas(ReporteModel reporte, String direccion) {
+        if (direccion != null && !direccion.isBlank()) {
+            reporte.setCoordenadas(geoService.obtenerCoordenadas(direccion));
+        }
     }
 
     private ReporteResponseDTO mapToResponseDTO(ReporteModel model) {

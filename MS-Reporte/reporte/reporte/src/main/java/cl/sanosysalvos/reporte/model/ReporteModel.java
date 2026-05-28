@@ -1,11 +1,11 @@
 package cl.sanosysalvos.reporte.model;
 
 import jakarta.persistence.*;
-import lombok.Data; 
+import lombok.Data;
 
 @Entity
 @Table(name = "reportes")
-@Data 
+@Data
 public class ReporteModel {
 
     @Id

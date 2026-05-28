@@ -23,7 +23,5 @@ public class ReporteRequestDTO {
     private String fotoMascota; // Ajustado
     private String descripcion;
     private String direccion;   // Ajustado
-    private String coordenadas;
-    private String estado;
     private String sexo; 
 }
