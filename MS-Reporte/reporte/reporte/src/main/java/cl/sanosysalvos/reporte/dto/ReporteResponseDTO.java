@@ -16,13 +16,11 @@ public class ReporteResponseDTO {
     private Long id; 
     private Integer idUsuario;
     
-    // Datos principales del reporte
     private TipoReporte tipoReporte; 
     
     private String direccion;
     private String coordenadas;
     
-    // Características de la mascota
     private String nombreMascota;
     private String tipoMascota;
     private String raza;
@@ -30,14 +28,11 @@ public class ReporteResponseDTO {
     private String color;
     private String sexo;
     
-    // Detalles adicionales
     private String descripcion;
     private String fotoMascota;
     
-    // Estado interno del reporte
-    private String estado; // Ej: ACTIVO, RESUELTO
-    
-    // Constructor personalizado para queries
+    private String estado;
+
     public ReporteResponseDTO(Long id, String raza, TipoReporte tipoReporte) {
         this.id = id;
         this.raza = raza;

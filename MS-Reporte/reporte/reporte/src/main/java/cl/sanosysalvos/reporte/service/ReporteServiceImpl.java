@@ -17,9 +17,9 @@ public class ReporteServiceImpl implements ReporteService {
 
     private final ReporteRepository reporteRepository;
     private final ReportePublisher reportePublisher;
-    private final GeoService geoService; // <-- 1. Declaramos el GeoService
+    private final GeoService geoService; 
 
-    // 2. Inyectamos los 3 servicios en el constructor
+   
     public ReporteServiceImpl(
         ReporteRepository reporteRepository, 
         ReportePublisher reportePublisher, 

@@ -16,7 +16,6 @@ public class ReporteController {
 
     private final ReporteService reporteService;
 
-    // Inyección de dependencias por constructor
     public ReporteController(ReporteService reporteService) {
         this.reporteService = reporteService;
     }
@@ -24,7 +23,6 @@ public class ReporteController {
     @PostMapping
     public ResponseEntity<ReporteResponseDTO> crear(@Valid @RequestBody ReporteRequestDTO dto) {
         ReporteResponseDTO nuevoReporte = reporteService.guardarReporte(dto);
-        // Retornamos 201 Created, que es el estándar para creación de recursos
         return ResponseEntity.status(HttpStatus.CREATED).body(nuevoReporte);
     }
 
@@ -49,7 +47,6 @@ public class ReporteController {
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminar(@PathVariable Long id) {
         reporteService.eliminarReporte(id);
-        // Retornamos 204 No Content, indicando que se eliminó correctamente
         return ResponseEntity.noContent().build();
     }
 }

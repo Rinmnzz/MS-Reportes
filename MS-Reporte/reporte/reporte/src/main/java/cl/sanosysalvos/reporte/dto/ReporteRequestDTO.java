@@ -15,13 +15,13 @@ public class ReporteRequestDTO {
     
     private Integer idUsuario;
     private TipoReporte tipoReporte; 
-    private String tipoMascota; // Ajustado
+    private String tipoMascota;
     private String nombreMascota;
     private String color;
     private TamanoMascota tamano;
     private String raza;
-    private String fotoMascota; // Ajustado
+    private String fotoMascota;
     private String descripcion;
-    private String direccion;   // Ajustado
+    private String direccion;
     private String sexo; 
 }
